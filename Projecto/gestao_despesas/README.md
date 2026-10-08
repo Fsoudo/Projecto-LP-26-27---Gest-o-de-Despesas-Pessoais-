@@ -8,8 +8,8 @@
 
 | Nome | Número de Aluno |
 |---|---|
-| *A preencher* | *A preencher* |
-| *A preencher* | *A preencher* |
+| Francisco Soudo| 14060 |
+| João Soares | *A preencher* |
 | *A preencher* | *A preencher* |
 
 ---
