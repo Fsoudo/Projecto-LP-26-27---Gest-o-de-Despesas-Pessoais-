@@ -1,0 +1,276 @@
+=====================================================================
+ MÓDULO interface
+ Menu textual na consola
+=====================================================================
+
+ USA modelo, validacao, operacoes, persistencia
+
+=====================================================================
+ 1. LEITURA DE DADOS (repete o pedido enquanto a resposta for inválida)
+=====================================================================
+
+---------------------------------------------------------------------
+ FUNÇÃO ler_data(mensagem, permitir_vazio) : texto ou NULO
+---------------------------------------------------------------------
+ INÍCIO
+     REPETIR
+         ESCREVER mensagem
+         LER texto
+         SE texto = "" ENTÃO
+             SE permitir_vazio ENTÃO DEVOLVER NULO FIM SE
+             DEVOLVER DATA_DE_HOJE()
+         FIM SE
+         SE data_valida(texto) ENTÃO
+             DEVOLVER texto
+         FIM SE
+         ESCREVER "Data inválida. Use AAAA-MM-DD."
+     ATÉ FALSO          // só sai pelos DEVOLVER
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO ler_opcao(mensagem, opcoes, permitir_vazio) : texto ou NULO
+ Mostra as opções numeradas; aceita o número ou o nome
+---------------------------------------------------------------------
+ INÍCIO
+     PARA n DE 1 ATÉ COMPRIMENTO(opcoes) FAZER
+         ESCREVER n + ". " + opcoes[n - 1]
+     FIM PARA
+     REPETIR
+         ESCREVER mensagem
+         LER texto
+         SE texto = "" E permitir_vazio ENTÃO DEVOLVER NULO FIM SE
+         SE texto é número E 1 <= texto <= COMPRIMENTO(opcoes) ENTÃO
+             DEVOLVER opcoes[texto - 1]
+         FIM SE
+         SE texto PERTENCE A opcoes ENTÃO
+             DEVOLVER texto
+         FIM SE
+         ESCREVER "Opção inválida."
+     ATÉ FALSO
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO ler_valor(mensagem, permitir_vazio) : real ou NULO
+---------------------------------------------------------------------
+ INÍCIO
+     REPETIR
+         ESCREVER mensagem
+         LER texto
+         SE texto = "" E permitir_vazio ENTÃO DEVOLVER NULO FIM SE
+         valor <- converter_valor(texto)
+         SE valor <> NULO ENTÃO
+             DEVOLVER valor
+         FIM SE
+         ESCREVER "Valor inválido. Introduza um número positivo (ex.: 12,50)."
+     ATÉ FALSO
+ FIM
+
+ // ler_texto, ler_inteiro e ler_ano_mes seguem o mesmo padrão:
+ // pedir -> validar -> devolver se válido, senão avisar e repetir.
+
+=====================================================================
+ 2. APRESENTAÇÃO
+=====================================================================
+
+---------------------------------------------------------------------
+ PROCEDIMENTO mostrar_movimentos(movimentos)
+---------------------------------------------------------------------
+ INÍCIO
+     SE movimentos está vazia ENTÃO
+         ESCREVER "(sem movimentos)"
+     SENÃO
+         ESCREVER cabeçalho da tabela
+         PARA CADA m EM movimentos FAZER
+             ESCREVER formatar_movimento(m)
+         FIM PARA
+         (receitas, despesas, saldo) <- calcular_totais(movimentos)
+         ESCREVER "Receitas: ", receitas, "  Despesas: ", despesas, "  Saldo: ", saldo
+     FIM SE
+ FIM
+
+=====================================================================
+ 3. AÇÕES DO MENU
+=====================================================================
+
+ PROCEDIMENTO acao_registar(movimentos)
+ INÍCIO
+     data      <- ler_data("Data (Enter = hoje): ", FALSO)
+     tipo      <- ler_opcao("Tipo: ", TIPOS, FALSO)
+     categoria <- ler_opcao("Categoria: ", categorias_do_tipo(tipo), FALSO)
+     descricao <- ler_texto("Descrição: ", FALSO)
+     valor     <- ler_valor("Valor (€): ", FALSO)
+     m <- adicionar_movimento(movimentos, data, tipo, categoria, descricao, valor)
+     ESCREVER "Movimento registado com o id ", m[ID]
+ FIM
+
+ PROCEDIMENTO acao_listar(movimentos)
+ INÍCIO
+     mostrar_movimentos(ordenar_por_data(movimentos, FALSO))
+ FIM
+
+ PROCEDIMENTO acao_alterar(movimentos)
+ INÍCIO
+     id <- ler_inteiro("Id do movimento: ")
+     m <- obter_movimento(movimentos, id)
+     SE m = NULO ENTÃO
+         ESCREVER "Não existe nenhum movimento com esse id."
+         SAIR
+     FIM SE
+     ESCREVER formatar_movimento(m)
+     ESCREVER "(Enter para manter o valor atual)"
+     data <- ler_data("Nova data: ", VERDADEIRO)
+     tipo <- ler_opcao("Novo tipo: ", TIPOS, VERDADEIRO)
+     SE tipo = NULO ENTÃO
+         tipo_final <- m[TIPO]
+     SENÃO
+         tipo_final <- tipo
+     FIM SE
+     // se o tipo mudou, a categoria é obrigatória
+     categoria <- ler_opcao("Nova categoria: ", categorias_do_tipo(tipo_final), tipo = NULO)
+     descricao <- ler_texto("Nova descrição: ", VERDADEIRO)
+     valor     <- ler_valor("Novo valor (€): ", VERDADEIRO)
+     TENTAR
+         novo <- atualizar_movimento(movimentos, id, data, tipo, categoria, descricao, valor)
+         ESCREVER "Atualizado: ", formatar_movimento(novo)
+     EM CASO DE ERRO e
+         ESCREVER "Não foi possível alterar: ", e
+     FIM TENTAR
+ FIM
+
+ PROCEDIMENTO acao_remover(movimentos)
+ INÍCIO
+     id <- ler_inteiro("Id do movimento: ")
+     m <- obter_movimento(movimentos, id)
+     SE m = NULO ENTÃO
+         ESCREVER "Não existe nenhum movimento com esse id."
+     SENÃO
+         ESCREVER formatar_movimento(m)
+         ESCREVER "Tem a certeza? (s/n)"
+         LER resposta
+         SE resposta = "s" ENTÃO
+             remover_movimento(movimentos, id)
+             ESCREVER "Movimento removido."
+         SENÃO
+             ESCREVER "Operação cancelada."
+         FIM SE
+     FIM SE
+ FIM
+
+ PROCEDIMENTO acao_filtrar(movimentos)
+ INÍCIO
+     ESCREVER "1-Tipo  2-Categoria  3-Mês  4-Intervalo de datas  5-Texto"
+     LER escolha
+     ESCOLHER escolha
+         CASO "1": tipo <- ler_opcao(...)
+                   resultado <- filtrar_por_tipo(movimentos, tipo)
+         CASO "2": tipo <- ler_opcao(...);  categoria <- ler_opcao(...)
+                   resultado <- filtrar_por_tipo(filtrar_por_categoria(movimentos, categoria), tipo)
+         CASO "3": (ano, mes) <- ler_ano_mes()
+                   resultado <- filtrar_por_mes(movimentos, ano, mes)
+         CASO "4": inicio <- ler_data(...);  fim <- ler_data(...)
+                   resultado <- filtrar_por_periodo(movimentos, inicio, fim)
+         CASO "5": texto <- ler_texto(...)
+                   resultado <- pesquisar_descricao(movimentos, texto)
+         OUTRO:    ESCREVER "Opção inválida."
+                   SAIR
+     FIM ESCOLHER
+     mostrar_movimentos(ordenar_por_data(resultado, FALSO))
+ FIM
+
+ PROCEDIMENTO acao_ordenar(movimentos)
+ INÍCIO
+     ESCREVER "1-Data asc  2-Data desc  3-Valor asc  4-Valor desc"
+     LER escolha
+     ESCOLHER escolha
+         CASO "1": mostrar_movimentos(ordenar_por_data(movimentos, FALSO))
+         CASO "2": mostrar_movimentos(ordenar_por_data(movimentos, VERDADEIRO))
+         CASO "3": mostrar_movimentos(ordenar_por_valor(movimentos, FALSO))
+         CASO "4": mostrar_movimentos(ordenar_por_valor(movimentos, VERDADEIRO))
+         OUTRO:    ESCREVER "Opção inválida."
+     FIM ESCOLHER
+ FIM
+
+ PROCEDIMENTO acao_resumo_mes(movimentos)
+ INÍCIO
+     (ano, mes) <- ler_ano_mes()
+     do_mes <- filtrar_por_mes(movimentos, ano, mes)
+     (receitas, despesas, saldo) <- calcular_totais(do_mes)
+     ESCREVER receitas, despesas, saldo
+     PARA CADA (categoria, total) EM totais_por_categoria(do_mes, DESPESA) FAZER
+         percentagem <- total / despesas * 100
+         ESCREVER categoria, total, percentagem, REPETIR("#", percentagem / 5)
+     FIM PARA
+ FIM
+
+ PROCEDIMENTO acao_gasto_dia(movimentos)
+ INÍCIO
+     data <- ler_data("Data (Enter = hoje): ", FALSO)
+     total <- total_do_dia(movimentos, data)
+     ESCREVER "Total gasto em ", data, ": ", total
+     limite <- ler_valor("Orçamento diário (Enter para ignorar): ", VERDADEIRO)
+     SE limite <> NULO ENTÃO
+         SE total > limite ENTÃO
+             ESCREVER "Excedeu o orçamento diário em ", total - limite
+         SENÃO
+             ESCREVER "Ainda pode gastar ", limite - total
+         FIM SE
+     FIM SE
+ FIM
+
+ PROCEDIMENTO acao_orcamento(movimentos)
+ INÍCIO
+     (ano, mes) <- ler_ano_mes()
+     limite <- ler_valor("Orçamento para o mês (€): ", FALSO)
+     (gasto, restante, percentagem, excedido) <- verificar_orcamento(movimentos, ano, mes, limite)
+     ESCREVER "Gasto: ", gasto, " de ", limite, " (", percentagem, "%)"
+     SE excedido ENTÃO
+         ESCREVER "ORÇAMENTO EXCEDIDO em ", -restante
+     SENÃO SE percentagem >= 80 ENTÃO
+         ESCREVER "Atenção: já usou mais de 80%. Restam ", restante
+     SENÃO
+         ESCREVER "Restam ", restante
+     FIM SE
+ FIM
+
+=====================================================================
+ 4. CICLO PRINCIPAL
+=====================================================================
+
+---------------------------------------------------------------------
+ PROCEDIMENTO executar()
+---------------------------------------------------------------------
+ INÍCIO
+     movimentos <- carregar_movimentos(FICHEIRO_PADRAO)
+     ESCREVER "Carregados ", COMPRIMENTO(movimentos), " movimentos."
+
+     ENQUANTO VERDADEIRO FAZER
+         ESCREVER "===== GESTOR DE DESPESAS PESSOAIS ====="
+         ESCREVER "1 - Registar movimento"
+         ESCREVER "2 - Listar movimentos"
+         ESCREVER "3 - Alterar movimento"
+         ESCREVER "4 - Remover movimento"
+         ESCREVER "5 - Pesquisar / filtrar"
+         ESCREVER "6 - Ordenar movimentos"
+         ESCREVER "7 - Resumo de um mês"
+         ESCREVER "8 - Gasto de um dia"
+         ESCREVER "9 - Verificar orçamento mensal"
+         ESCREVER "0 - Guardar e sair"
+         LER escolha
+
+         ESCOLHER escolha
+             CASO "1": acao_registar(movimentos)
+             CASO "2": acao_listar(movimentos)
+             CASO "3": acao_alterar(movimentos)
+             CASO "4": acao_remover(movimentos)
+             CASO "5": acao_filtrar(movimentos)
+             CASO "6": acao_ordenar(movimentos)
+             CASO "7": acao_resumo_mes(movimentos)
+             CASO "8": acao_gasto_dia(movimentos)
+             CASO "9": acao_orcamento(movimentos)
+             CASO "0": guardar_movimentos(movimentos, FICHEIRO_PADRAO)
+                       ESCREVER "Dados guardados. Até à próxima!"
+                       TERMINAR CICLO
+             OUTRO:    ESCREVER "Opção inválida."
+         FIM ESCOLHER
+     FIM ENQUANTO
+ FIM

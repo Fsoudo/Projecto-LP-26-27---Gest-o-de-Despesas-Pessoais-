@@ -1,0 +1,283 @@
+=====================================================================
+ MÓDULO operacoes
+ CRUD, pesquisa/filtragem, ordenação e resumos
+ Todas as funções recebem a LISTA de movimentos como 1.º parâmetro.
+=====================================================================
+
+ USA modelo, validacao
+
+=====================================================================
+ 1. CRUD
+=====================================================================
+
+---------------------------------------------------------------------
+ FUNÇÃO adicionar_movimento(movimentos, data, tipo, categoria, descricao, valor) : tuplo
+---------------------------------------------------------------------
+ INÍCIO
+     erros <- validar_campos(data, tipo, categoria, descricao, valor)
+     SE erros não está vazia ENTÃO
+         ASSINALAR ERRO(erros)
+     FIM SE
+     movimento <- criar_movimento(proximo_id(movimentos), data, tipo,
+                                  categoria, descricao, valor)
+     ACRESCENTAR movimento A movimentos
+     DEVOLVER movimento
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO procurar_indice(movimentos, id) : inteiro
+ Devolve a posição do movimento na lista, ou -1 se não existir
+---------------------------------------------------------------------
+ INÍCIO
+     PARA i DE 0 ATÉ COMPRIMENTO(movimentos) - 1 FAZER
+         SE movimentos[i][ID] = id ENTÃO
+             DEVOLVER i
+         FIM SE
+     FIM PARA
+     DEVOLVER -1
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO obter_movimento(movimentos, id) : tuplo ou NULO
+---------------------------------------------------------------------
+ INÍCIO
+     i <- procurar_indice(movimentos, id)
+     SE i = -1 ENTÃO
+         DEVOLVER NULO
+     FIM SE
+     DEVOLVER movimentos[i]
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO atualizar_movimento(movimentos, id, data, tipo, categoria, descricao, valor) : tuplo
+ Os parâmetros com valor NULO mantêm o valor atual.
+ Como o tuplo é imutável, cria-se um NOVO tuplo que substitui o antigo.
+---------------------------------------------------------------------
+ INÍCIO
+     i <- procurar_indice(movimentos, id)
+     SE i = -1 ENTÃO
+         ASSINALAR ERRO("Não existe nenhum movimento com esse id.")
+     FIM SE
+
+     antigo <- movimentos[i]
+     SE data      = NULO ENTÃO data      <- antigo[DATA]      FIM SE
+     SE tipo      = NULO ENTÃO tipo      <- antigo[TIPO]      FIM SE
+     SE categoria = NULO ENTÃO categoria <- antigo[CATEGORIA] FIM SE
+     SE descricao = NULO ENTÃO descricao <- antigo[DESCRICAO] FIM SE
+     SE valor     = NULO ENTÃO valor     <- antigo[VALOR]     FIM SE
+
+     erros <- validar_campos(data, tipo, categoria, descricao, valor)
+     SE erros não está vazia ENTÃO
+         ASSINALAR ERRO(erros)
+     FIM SE
+
+     novo <- criar_movimento(id, data, tipo, categoria, descricao, valor)
+     movimentos[i] <- novo
+     DEVOLVER novo
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO remover_movimento(movimentos, id) : lógico
+---------------------------------------------------------------------
+ INÍCIO
+     i <- procurar_indice(movimentos, id)
+     SE i = -1 ENTÃO
+         DEVOLVER FALSO
+     FIM SE
+     REMOVER movimentos[i]
+     DEVOLVER VERDADEIRO
+ FIM
+
+=====================================================================
+ 2. PESQUISA E FILTRAGEM  (devolvem sempre uma NOVA lista)
+=====================================================================
+
+---------------------------------------------------------------------
+ FUNÇÃO filtrar_por_tipo(movimentos, tipo) : lista
+---------------------------------------------------------------------
+ INÍCIO
+     resultado <- []
+     PARA CADA m EM movimentos FAZER
+         SE m[TIPO] = tipo ENTÃO
+             ACRESCENTAR m A resultado
+         FIM SE
+     FIM PARA
+     DEVOLVER resultado
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO filtrar_por_categoria(movimentos, categoria) : lista
+---------------------------------------------------------------------
+ INÍCIO
+     resultado <- []
+     PARA CADA m EM movimentos FAZER
+         SE m[CATEGORIA] = categoria ENTÃO
+             ACRESCENTAR m A resultado
+         FIM SE
+     FIM PARA
+     DEVOLVER resultado
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO filtrar_por_periodo(movimentos, data_inicio, data_fim) : lista
+ Datas AAAA-MM-DD podem ser comparadas diretamente como texto.
+---------------------------------------------------------------------
+ INÍCIO
+     resultado <- []
+     PARA CADA m EM movimentos FAZER
+         SE data_inicio <= m[DATA] E m[DATA] <= data_fim ENTÃO
+             ACRESCENTAR m A resultado
+         FIM SE
+     FIM PARA
+     DEVOLVER resultado
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO filtrar_por_mes(movimentos, ano, mes) : lista
+---------------------------------------------------------------------
+ INÍCIO
+     prefixo <- ano (4 dígitos) + "-" + mes (2 dígitos)      // ex.: "2026-10"
+     resultado <- []
+     PARA CADA m EM movimentos FAZER
+         SE m[DATA] COMEÇA POR prefixo ENTÃO
+             ACRESCENTAR m A resultado
+         FIM SE
+     FIM PARA
+     DEVOLVER resultado
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO pesquisar_descricao(movimentos, texto) : lista
+ Pesquisa sem distinguir maiúsculas/minúsculas
+---------------------------------------------------------------------
+ INÍCIO
+     texto <- MINUSCULAS(texto)
+     resultado <- []
+     PARA CADA m EM movimentos FAZER
+         SE texto ESTÁ CONTIDO EM MINUSCULAS(m[DESCRICAO]) ENTÃO
+             ACRESCENTAR m A resultado
+         FIM SE
+     FIM PARA
+     DEVOLVER resultado
+ FIM
+
+=====================================================================
+ 3. ORDENAÇÃO  (ordenação por inserção; a lista original não é alterada)
+=====================================================================
+
+---------------------------------------------------------------------
+ FUNÇÃO ordenar_por_campo(movimentos, campo, decrescente) : lista
+---------------------------------------------------------------------
+ INÍCIO
+     ordenada <- CÓPIA(movimentos)
+     PARA i DE 1 ATÉ COMPRIMENTO(ordenada) - 1 FAZER
+         atual <- ordenada[i]
+         j <- i - 1
+         ENQUANTO j >= 0 E vem_depois(ordenada[j][campo], atual[campo], decrescente) FAZER
+             ordenada[j + 1] <- ordenada[j]
+             j <- j - 1
+         FIM ENQUANTO
+         ordenada[j + 1] <- atual
+     FIM PARA
+     DEVOLVER ordenada
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO vem_depois(a, b, decrescente) : lógico
+---------------------------------------------------------------------
+ INÍCIO
+     SE decrescente ENTÃO
+         DEVOLVER a < b
+     SENÃO
+         DEVOLVER a > b
+     FIM SE
+ FIM
+
+ FUNÇÃO ordenar_por_data(movimentos, decrescente)
+     DEVOLVER ordenar_por_campo(movimentos, DATA, decrescente)
+
+ FUNÇÃO ordenar_por_valor(movimentos, decrescente)
+     DEVOLVER ordenar_por_campo(movimentos, VALOR, decrescente)
+
+=====================================================================
+ 4. RESUMOS E ORÇAMENTO
+=====================================================================
+
+---------------------------------------------------------------------
+ FUNÇÃO calcular_totais(movimentos) : tuplo (receitas, despesas, saldo)
+---------------------------------------------------------------------
+ INÍCIO
+     receitas <- 0
+     despesas <- 0
+     PARA CADA m EM movimentos FAZER
+         SE m[TIPO] = RECEITA ENTÃO
+             receitas <- receitas + m[VALOR]
+         SENÃO
+             despesas <- despesas + m[VALOR]
+         FIM SE
+     FIM PARA
+     saldo <- receitas - despesas
+     DEVOLVER (ARREDONDAR(receitas, 2), ARREDONDAR(despesas, 2), ARREDONDAR(saldo, 2))
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO totais_por_categoria(movimentos, tipo) : lista de tuplos (categoria, total)
+ Só categorias com total > 0, do maior para o menor total
+---------------------------------------------------------------------
+ INÍCIO
+     resultado <- []
+     PARA CADA categoria EM categorias_do_tipo(tipo) FAZER
+         total <- 0
+         PARA CADA m EM movimentos FAZER
+             SE m[TIPO] = tipo E m[CATEGORIA] = categoria ENTÃO
+                 total <- total + m[VALOR]
+             FIM SE
+         FIM PARA
+         SE total > 0 ENTÃO
+             ACRESCENTAR (categoria, ARREDONDAR(total, 2)) A resultado
+         FIM SE
+     FIM PARA
+
+     // ordenação por inserção pelo total (posição 1 do tuplo), decrescente
+     PARA i DE 1 ATÉ COMPRIMENTO(resultado) - 1 FAZER
+         atual <- resultado[i]
+         j <- i - 1
+         ENQUANTO j >= 0 E resultado[j][1] < atual[1] FAZER
+             resultado[j + 1] <- resultado[j]
+             j <- j - 1
+         FIM ENQUANTO
+         resultado[j + 1] <- atual
+     FIM PARA
+     DEVOLVER resultado
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO total_do_dia(movimentos, data) : real
+ Total de despesas de um dia (orçamento diário)
+---------------------------------------------------------------------
+ INÍCIO
+     total <- 0
+     PARA CADA m EM movimentos FAZER
+         SE m[DATA] = data E m[TIPO] = DESPESA ENTÃO
+             total <- total + m[VALOR]
+         FIM SE
+     FIM PARA
+     DEVOLVER ARREDONDAR(total, 2)
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO verificar_orcamento(movimentos, ano, mes, limite)
+        : tuplo (gasto, restante, percentagem, excedido)
+---------------------------------------------------------------------
+ INÍCIO
+     do_mes <- filtrar_por_mes(movimentos, ano, mes)
+     (_, gasto, _) <- calcular_totais(do_mes)
+     restante <- limite - gasto
+     SE limite > 0 ENTÃO
+         percentagem <- gasto / limite * 100
+     SENÃO
+         percentagem <- 0
+     FIM SE
+     excedido <- gasto > limite
+     DEVOLVER (gasto, restante, percentagem, excedido)
+ FIM

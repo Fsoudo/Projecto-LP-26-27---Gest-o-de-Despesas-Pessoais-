@@ -1,0 +1,46 @@
+=====================================================================
+ MÓDULO persistencia
+ Leitura e escrita dos movimentos no ficheiro dados/movimentos.csv
+ (uma linha por movimento, campos separados por ";")
+=====================================================================
+
+ USA modelo (CAMPOS, criar_movimento)
+
+ CONSTANTE FICHEIRO_PADRAO <- "dados/movimentos.csv"
+
+---------------------------------------------------------------------
+ PROCEDIMENTO guardar_movimentos(movimentos, caminho)
+---------------------------------------------------------------------
+ INÍCIO
+     ABRIR caminho PARA ESCRITA COMO ficheiro
+     ESCREVER LINHA JUNTAR(CAMPOS, ";") EM ficheiro        // cabeçalho
+     PARA CADA m EM movimentos FAZER
+         ESCREVER LINHA JUNTAR(m, ";") EM ficheiro
+     FIM PARA
+     FECHAR ficheiro
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO carregar_movimentos(caminho) : lista
+ Se o ficheiro não existir devolve lista vazia; linhas inválidas são ignoradas
+---------------------------------------------------------------------
+ INÍCIO
+     movimentos <- []
+     SE caminho NÃO EXISTE ENTÃO
+         DEVOLVER movimentos
+     FIM SE
+
+     ABRIR caminho PARA LEITURA COMO ficheiro
+     LER LINHA DE ficheiro                                  // salta o cabeçalho
+     ENQUANTO NÃO FIM_DE_FICHEIRO(ficheiro) FAZER
+         campos <- DIVIDIR(LER LINHA DE ficheiro, ";")
+         SE COMPRIMENTO(campos) = 6
+            E campos[0] é inteiro E campos[5] é número ENTÃO
+             m <- criar_movimento(INTEIRO(campos[0]), campos[1], campos[2],
+                                  campos[3], campos[4], REAL(campos[5]))
+             ACRESCENTAR m A movimentos
+         FIM SE
+     FIM ENQUANTO
+     FECHAR ficheiro
+     DEVOLVER movimentos
+ FIM

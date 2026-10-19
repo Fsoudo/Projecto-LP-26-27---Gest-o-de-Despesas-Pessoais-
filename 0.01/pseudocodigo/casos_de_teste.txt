@@ -1,0 +1,41 @@
+=====================================================================
+ CASOS DE TESTE (a automatizar quando o código for escrito em Python)
+=====================================================================
+
+ Lista de exemplo usada nos testes:
+     1  2026-10-01  receita  bolsa        Bolsa         350.00
+     2  2026-10-02  despesa  alimentacao  Supermercado   42.35
+     3  2026-10-02  despesa  transporte   Passe          25.00
+     4  2026-09-20  despesa  alimentacao  Cantina        10.00
+
+ ------------------------------------------------------------------------------
+ Função                                  Entrada                    Esperado
+ ------------------------------------------------------------------------------
+ data_valida                             "2026-10-19"               VERDADEIRO
+ data_valida                             "2026-02-30"               FALSO
+ data_valida                             "19-10-2026"               FALSO
+ converter_valor                         "12,50"                    12.5
+ converter_valor                         "-5" / "0" / "abc"         NULO
+ adicionar_movimento (4 vezes)           lista vazia                ids 1, 2, 3, 4
+ adicionar_movimento                     data "2026-13-01"          ERRO, lista inalterada
+ adicionar_movimento                     despesa com cat. "salario" ERRO
+ atualizar_movimento                     id 2, valor 50             movimento 2 com valor 50
+ atualizar_movimento                     id 99                      ERRO (não existe)
+ remover_movimento                       id 3 (2 vezes)             VERDADEIRO, depois FALSO
+ adicionar após remover o id 3           —                          novo id = 5
+ filtrar_por_tipo                        "despesa"                  3 movimentos
+ filtrar_por_categoria                   "alimentacao"              2 movimentos
+ filtrar_por_mes                         2026, 10                   3 movimentos
+ filtrar_por_periodo                     2026-10-02 a 2026-10-31    2 movimentos
+ pesquisar_descricao                     "SUPER"                    1 movimento
+ ordenar_por_data                        —                          1.º = id 4
+ ordenar_por_valor (decrescente)         —                          350, 42.35, 25, 10
+ calcular_totais                         lista exemplo              (350.00, 77.35, 272.65)
+ calcular_totais                         lista vazia                (0, 0, 0)
+ totais_por_categoria                    "despesa"                  [(alimentacao, 52.35), (transporte, 25.00)]
+ total_do_dia                            "2026-10-02"               67.35
+ verificar_orcamento                     2026, 10, limite 100       (67.35, 32.65, 67.3%, FALSO)
+ verificar_orcamento                     2026, 10, limite 50        excedido = VERDADEIRO
+ guardar + carregar                      lista exemplo              lista igual à original
+ carregar_movimentos                     ficheiro inexistente       lista vazia
+ ------------------------------------------------------------------------------

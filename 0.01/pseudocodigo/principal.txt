@@ -1,0 +1,14 @@
+=====================================================================
+ ALGORITMO GestorDeDespesasPessoais
+ Ponto de entrada do programa
+=====================================================================
+
+ USA interface (executar)
+
+ INÍCIO
+     TENTAR
+         executar()
+     EM CASO DE INTERRUPÇÃO (Ctrl+C)
+         ESCREVER "Programa interrompido. As alterações desta sessão não foram guardadas."
+     FIM TENTAR
+ FIM

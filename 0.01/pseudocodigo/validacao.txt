@@ -1,0 +1,91 @@
+=====================================================================
+ MÓDULO validacao
+ Validação dos dados introduzidos pelo utilizador
+=====================================================================
+
+ USA modelo (TIPOS, categorias_do_tipo)
+
+---------------------------------------------------------------------
+ FUNÇÃO data_valida(texto) : lógico
+ Verifica se o texto é uma data real no formato AAAA-MM-DD
+---------------------------------------------------------------------
+ INÍCIO
+     SE COMPRIMENTO(texto) <> 10 ENTÃO
+         DEVOLVER FALSO
+     FIM SE
+     SE texto[4] <> "-" OU texto[7] <> "-" ENTÃO
+         DEVOLVER FALSO
+     FIM SE
+     ano <- texto[0..3]   mes <- texto[5..6]   dia <- texto[8..9]
+     SE ano, mes ou dia não forem números ENTÃO
+         DEVOLVER FALSO
+     FIM SE
+     SE mes < 1 OU mes > 12 ENTÃO
+         DEVOLVER FALSO
+     FIM SE
+     SE dia < 1 OU dia > DIAS_DO_MES(ano, mes) ENTÃO    // ex.: 30/02 é inválido
+         DEVOLVER FALSO
+     FIM SE
+     DEVOLVER VERDADEIRO
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO converter_valor(texto) : real ou NULO
+ Aceita "12,50" ou "12.50". Devolve NULO se não for um número positivo.
+---------------------------------------------------------------------
+ INÍCIO
+     texto <- SUBSTITUIR(",", ".", REMOVER_ESPACOS(texto))
+     SE texto não representa um número ENTÃO
+         DEVOLVER NULO
+     FIM SE
+     valor <- CONVERTER_PARA_REAL(texto)
+     SE valor <= 0 ENTÃO
+         DEVOLVER NULO
+     FIM SE
+     DEVOLVER ARREDONDAR(valor, 2)
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO tipo_valido(tipo) : lógico
+---------------------------------------------------------------------
+ INÍCIO
+     DEVOLVER tipo PERTENCE A TIPOS
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO categoria_valida(tipo, categoria) : lógico
+---------------------------------------------------------------------
+ INÍCIO
+     DEVOLVER categoria PERTENCE A categorias_do_tipo(tipo)
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO descricao_valida(descricao) : lógico
+ Não pode ser vazia nem conter ";" (separador do ficheiro CSV)
+---------------------------------------------------------------------
+ INÍCIO
+     DEVOLVER REMOVER_ESPACOS(descricao) <> "" E ";" NÃO PERTENCE A descricao
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO validar_campos(data, tipo, categoria, descricao, valor) : lista
+ Devolve a lista de mensagens de erro (vazia se tudo estiver correto)
+---------------------------------------------------------------------
+ INÍCIO
+     erros <- []
+     SE NÃO data_valida(data) ENTÃO
+         ACRESCENTAR "Data inválida (use AAAA-MM-DD)." A erros
+     FIM SE
+     SE NÃO tipo_valido(tipo) ENTÃO
+         ACRESCENTAR "Tipo inválido." A erros
+     SENÃO SE NÃO categoria_valida(tipo, categoria) ENTÃO
+         ACRESCENTAR "Categoria inválida para o tipo." A erros
+     FIM SE
+     SE NÃO descricao_valida(descricao) ENTÃO
+         ACRESCENTAR "Descrição vazia ou com ';'." A erros
+     FIM SE
+     SE valor não é número OU valor <= 0 ENTÃO
+         ACRESCENTAR "O valor tem de ser positivo." A erros
+     FIM SE
+     DEVOLVER erros
+ FIM

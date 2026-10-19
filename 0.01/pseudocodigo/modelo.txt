@@ -1,0 +1,88 @@
+=====================================================================
+ MÓDULO modelo
+ Estrutura de dados do Gestor de Despesas Pessoais
+=====================================================================
+
+ Um MOVIMENTO é um TUPLO com 6 campos (imutável):
+
+     (id, data, tipo, categoria, descricao, valor)
+
+     id         : inteiro   -> identificador único
+     data       : texto     -> formato AAAA-MM-DD
+     tipo       : texto     -> "receita" ou "despesa"
+     categoria  : texto     -> uma das categorias do tipo
+     descricao  : texto
+     valor      : real > 0  -> o sinal é dado pelo tipo
+
+ O conjunto de movimentos é uma LISTA de tuplos (mutável).
+
+---------------------------------------------------------------------
+ CONSTANTES
+---------------------------------------------------------------------
+
+ // posições dos campos dentro do tuplo
+ CONSTANTE ID        <- 0
+ CONSTANTE DATA      <- 1
+ CONSTANTE TIPO      <- 2
+ CONSTANTE CATEGORIA <- 3
+ CONSTANTE DESCRICAO <- 4
+ CONSTANTE VALOR     <- 5
+
+ CONSTANTE CAMPOS <- ("id", "data", "tipo", "categoria", "descricao", "valor")
+
+ CONSTANTE RECEITA <- "receita"
+ CONSTANTE DESPESA <- "despesa"
+ CONSTANTE TIPOS   <- (RECEITA, DESPESA)
+
+ CONSTANTE CATEGORIAS_RECEITA <- ("salario", "bolsa", "presente", "vendas", "outros")
+ CONSTANTE CATEGORIAS_DESPESA <- ("alimentacao", "transporte", "lazer",
+                                  "habitacao", "saude", "educacao", "outros")
+
+---------------------------------------------------------------------
+ FUNÇÃO categorias_do_tipo(tipo) : tuplo
+---------------------------------------------------------------------
+ INÍCIO
+     SE tipo = RECEITA ENTÃO
+         DEVOLVER CATEGORIAS_RECEITA
+     SENÃO SE tipo = DESPESA ENTÃO
+         DEVOLVER CATEGORIAS_DESPESA
+     SENÃO
+         DEVOLVER ()                      // tuplo vazio
+     FIM SE
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO criar_movimento(id, data, tipo, categoria, descricao, valor) : tuplo
+---------------------------------------------------------------------
+ INÍCIO
+     DEVOLVER (id, data, tipo, categoria, descricao, ARREDONDAR(valor, 2))
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO proximo_id(movimentos) : inteiro
+ Devolve o maior id existente + 1
+---------------------------------------------------------------------
+ INÍCIO
+     maior <- 0
+     PARA CADA movimento EM movimentos FAZER
+         SE movimento[ID] > maior ENTÃO
+             maior <- movimento[ID]
+         FIM SE
+     FIM PARA
+     DEVOLVER maior + 1
+ FIM
+
+---------------------------------------------------------------------
+ FUNÇÃO formatar_movimento(movimento) : texto
+ Devolve uma linha de tabela para mostrar o movimento
+---------------------------------------------------------------------
+ INÍCIO
+     SE movimento[TIPO] = RECEITA ENTÃO
+         sinal <- "+"
+     SENÃO
+         sinal <- "-"
+     FIM SE
+     DEVOLVER movimento[ID] + " | " + movimento[DATA] + " | " + movimento[TIPO]
+              + " | " + movimento[CATEGORIA] + " | " + movimento[DESCRICAO]
+              + " | " + sinal + movimento[VALOR] (2 casas decimais) + " €"
+ FIM

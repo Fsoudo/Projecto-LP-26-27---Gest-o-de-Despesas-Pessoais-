@@ -1,0 +1,13 @@
+id;data;tipo;categoria;descricao;valor
+1;2026-10-01;receita;bolsa;Bolsa de estudo;350.0
+2;2026-10-01;receita;salario;Part-time cafe;220.0
+3;2026-10-02;despesa;habitacao;Quarto;180.0
+4;2026-10-02;despesa;alimentacao;Supermercado;42.35
+5;2026-10-03;despesa;transporte;Passe mensal;25.0
+6;2026-10-05;despesa;lazer;Cinema;7.5
+7;2026-10-07;despesa;alimentacao;Cantina;12.6
+8;2026-10-09;despesa;educacao;Fotocopias;4.2
+9;2026-10-12;despesa;saude;Farmacia;9.9
+10;2026-10-14;despesa;lazer;Jantar com amigos;18.0
+11;2026-09-28;despesa;alimentacao;Supermercado;38.7
+12;2026-09-15;receita;presente;Aniversario;50.0
